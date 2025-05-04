@@ -33,6 +33,9 @@ namespace Customer.API.Controllers
         [HttpPost]
         public async Task<ActionResult> Create(CustomerEntity customer)
         {
+            customer.Id = Guid.NewGuid();
+            customer.RegistrationDate = DateTime.UtcNow;
+
             await _repository.AddAsync(customer);
             return CreatedAtAction(nameof(GetById), new { id = customer.Id }, customer);
         }
@@ -40,6 +43,11 @@ namespace Customer.API.Controllers
         [HttpPut("{id}")]
         public async Task<ActionResult> Update(Guid id, CustomerEntity customer)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             if (id != customer.Id) return BadRequest();
             await _repository.UpdateAsync(customer);
             return NoContent();
