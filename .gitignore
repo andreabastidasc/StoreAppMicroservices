@@ -1,0 +1,62 @@
+# User-specific files
+*.rsuser
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+
+# Visual Studio folder
+.vs/
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+**/packages/*
+
+# Others
+*.cache
+*.pdb
+*.mdb
+*.dbmdl
+*.bak
+*.sql
+*.log
+
+# Entity Framework Migrations snapshot files
+*Migrations/*.Designer.cs
+
+# Rider project files
+.idea/
+
+# DotCover
+*.dotCover
+
+# Web config transforms
+web.*.config
+
+# Publish results
+[Tt]est[Rr]esult*/
+build/
+publish/
+
+# Visual Studio Code
+.vscode/
+
+# OS generated files
+ehthumbs.db
+Thumbs.db
+.DS_Store
