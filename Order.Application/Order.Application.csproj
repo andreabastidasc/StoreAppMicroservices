@@ -6,4 +6,14 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
+  <ItemGroup>
+    <Folder Include="Validators\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Customer.Infrastructure\Customer.Infrastructure.csproj" />
+    <ProjectReference Include="..\Order.Domain\Order.Domain.csproj" />
+    <ProjectReference Include="..\Order.Infrastructure\Order.Infrastructure.csproj" />
+  </ItemGroup>
+
 </Project>

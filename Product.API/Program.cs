@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Product.API.DependencyInjection;
+using Product.Application.Services;
+using Product.Domain.Interfaces;
+using Product.Infrastructure.Repositories;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,9 @@ builder.Services.AddDbContext<Product.Infrastructure.Data.ProductDbContext>(opti
 
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+builder.Services.AddScoped<IProductRepository, ProductRepository>();
+builder.Services.AddScoped<ProductService>();
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 

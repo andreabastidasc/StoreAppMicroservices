@@ -1,9 +1,8 @@
-using Customer.Application.Services;
-using Customer.Domain.Interfaces;
-using Customer.Infrastructure.Data;
-using Customer.Infrastructure.Repositories;
 using Microsoft.EntityFrameworkCore;
-
+using Order.Infrastructure.Data;
+using Order.Infrastructure.Repositories;
+using Order.Application.Services;
+using Order.Domain.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,12 +13,15 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddScoped<ICustomerRepository, CustomerRepository>();
-builder.Services.AddScoped<CustomerService>();
+// Repositorio
+builder.Services.AddScoped<IOrderRepository, OrderRepository>();
 
-builder.Services.AddDbContext<CustomerDbContext>(options =>
+// Servicio
+builder.Services.AddScoped<OrderService>();
+
+// DbContext
+builder.Services.AddDbContext<OrderDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
 
 var app = builder.Build();
 

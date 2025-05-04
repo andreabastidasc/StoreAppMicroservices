@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Product.Domain.Interfaces;
-using ProductEntity = Product.Domain.Entities.Product;
+using Product.Application.DTOs;
+using Product.Application.Services;
 
 namespace Product.API.Controllers
 {
@@ -8,50 +8,46 @@ namespace Product.API.Controllers
     [Route("api/products")]
     public class ProductController : ControllerBase
     {
-        private readonly IProductRepository _repository;
+        private readonly ProductService _service;
 
-        public ProductController(IProductRepository repository)
+        public ProductController(ProductService service)
         {
-            _repository = repository;
+            _service = service;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<ProductEntity>>> GetAll()
+        public async Task<ActionResult<IEnumerable<ProductDto>>> GetAll()
         {
-            var products = await _repository.GetAllAsync();
-            return Ok(products);
+            return Ok(await _service.GetAllAsync());
         }
 
         [HttpGet("{id}")]
-        public async Task<ActionResult<ProductEntity>> GetById(Guid id)
+        public async Task<ActionResult<ProductDto>> GetById(Guid id)
         {
-            var product = await _repository.GetByIdAsync(id);
-            if (product == null)
-                return NotFound();
+            var product = await _service.GetByIdAsync(id);
+            if (product == null) return NotFound();
             return Ok(product);
         }
 
         [HttpPost]
-        public async Task<ActionResult> Create(ProductEntity product)
+        public async Task<ActionResult> Create(ProductDto dto)
         {
-            await _repository.AddAsync(product);
-            return CreatedAtAction(nameof(GetById), new { id = product.Id }, product);
+            await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
         }
 
         [HttpPut("{id}")]
-        public async Task<ActionResult> Update(Guid id, ProductEntity product)
+        public async Task<ActionResult> Update(Guid id, ProductDto dto)
         {
-            if (id != product.Id)
-                return BadRequest();
-
-            await _repository.UpdateAsync(product);
+            if (id != dto.Id) return BadRequest();
+            await _service.UpdateAsync(dto);
             return NoContent();
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult> Delete(Guid id)
         {
-            await _repository.DeleteAsync(id);
+            await _service.DeleteAsync(id);
             return NoContent();
         }
     }
