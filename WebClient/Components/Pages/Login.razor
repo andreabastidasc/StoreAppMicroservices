@@ -39,7 +39,7 @@
     private NavigationManager NavigationManager { get; set; }
 
     [Inject]
-    private IJSRuntime JSRuntime { get; set; }  // para guardar en localStorage
+    private IJSRuntime JSRuntime { get; set; }
 
     private async Task HandleLogin()
     {
@@ -53,14 +53,11 @@
             if (response.IsSuccessStatusCode)
             {
                 var json = await response.Content.ReadAsStringAsync();
-
-                // Guarda en localStorage (simulando almacenamiento de token/usuario)
                 await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", json);
 
                 message = "Login successful! Redirecting...";
 
-                // Redirigir a página principal o dashboard
-                NavigationManager.NavigateTo("/");
+                NavigationManager.NavigateTo("/products");
             }
             else
             {
