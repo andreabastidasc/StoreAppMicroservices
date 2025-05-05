@@ -1,0 +1,26 @@
+﻿@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+        <NavLink class="navbar-brand" href="/">My Store</NavLink>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarNav">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/profile">Profile</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/cart">Cart</NavLink>
+                </li>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="/">Logout</NavLink>
+                </li>
+            </ul>
+        </div>
+    </div>
+</nav>

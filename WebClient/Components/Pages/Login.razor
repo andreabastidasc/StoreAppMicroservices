@@ -1,5 +1,6 @@
 ﻿@page "/login"
-@using WebApp.Dtos
+@using WebClient.Dtos
+@inject NavigationManager Navigation
 @rendermode InteractiveServer
 
 <h3 class="text-center">Login</h3>
@@ -40,6 +41,19 @@
 
     [Inject]
     private IJSRuntime JSRuntime { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender && JSRuntime is not null)
+        {
+            var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+
+            if (!string.IsNullOrEmpty(userJson))
+            {
+                Navigation.NavigateTo("/products", true);
+            }
+        }
+    }
 
     private async Task HandleLogin()
     {

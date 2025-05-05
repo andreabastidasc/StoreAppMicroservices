@@ -1,10 +1,18 @@
 ﻿@page "/products"
-@using WebApp.Dtos
+@using WebClient.Dtos
 @inject IHttpClientFactory HttpClientFactory
 @inject IJSRuntime JSRuntime
 @rendermode InteractiveServer
 
 <h3 class="text-center">Product List</h3>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-info alert-dismissible fade show mt-3" role="alert">
+        @message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="() => message = null"></button>
+    </div>
+}
 
 @if (products == null)
 {
@@ -23,7 +31,7 @@ else
                         <p>Price: @product.Price</p>
                         <p>Stock: @product.Stock</p>
 
-                        <div class="input-group" style="max-width: 100px">
+                        <div class="input-group" style="max-width: 150px">
                             <button class="btn btn-secondary" @onclick="() => DecreaseQuantity(product.Id)">-</button>
                             <input class="form-control text-center" readonly value="@GetQuantity(product.Id)" />
                             <button class="btn btn-secondary" @onclick="() => IncreaseQuantity(product.Id, product.Stock)">+</button>
@@ -39,14 +47,42 @@ else
 
 @code {
     private List<ProductDto>? products;
+    private List<CartItemDto> cartItems = new();
     private Dictionary<Guid, int> cartQuantities = new();
+    private string message = "";
 
-    protected override async Task OnInitializedAsync()
+    private bool loaded = false;
+    private Dictionary<Guid, int> cartItemsInStorage = new();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        var client = HttpClientFactory.CreateClient();
-        client.BaseAddress = new Uri("https://localhost:7154");
+        if (firstRender)
+        {
+            var client = HttpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://localhost:7154");
 
-        products = await client.GetFromJsonAsync<List<ProductDto>>("api/products");
+            products = await client.GetFromJsonAsync<List<ProductDto>>("api/products");
+
+            var existingCart = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "cart");
+            if (!string.IsNullOrEmpty(existingCart))
+            {
+                var cartList = System.Text.Json.JsonSerializer.Deserialize<List<CartItemDto>>(existingCart);
+
+                foreach (var cartItem in cartList)
+                {
+                    var product = products.FirstOrDefault(p => p.Id == cartItem.Id);
+                    if (product != null)
+                    {
+                        product.Stock -= cartItem.Quantity;
+                        if (product.Stock < 0) product.Stock = 0;
+
+                        cartItemsInStorage[product.Id] = cartItem.Quantity;
+                    }
+                }
+            }
+
+            StateHasChanged();
+        }
     }
 
     private int GetQuantity(Guid productId)
@@ -54,10 +90,10 @@ else
         return cartQuantities.TryGetValue(productId, out var qty) ? qty : 0;
     }
 
-    private void IncreaseQuantity(Guid productId, int stock)
+    private void IncreaseQuantity(Guid productId, int availableStock)
     {
         var current = GetQuantity(productId);
-        if (current < stock)
+        if (current < availableStock)
         {
             cartQuantities[productId] = current + 1;
         }
@@ -75,29 +111,37 @@ else
     private async Task AddToCart(ProductDto product)
     {
         var qty = GetQuantity(product.Id);
-        if (qty <= 0)
-        {
-            return;
-        }
-
-        var cartItem = new
-        {
-            Id = product.Id,
-            Name = product.Name,
-            Price = product.Price,
-            Quantity = qty
-        };
+        if (qty <= 0) return;
 
         var existingCart = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "cart");
-        List<object> cartItems = string.IsNullOrEmpty(existingCart)
-            ? new List<object>()
-            : System.Text.Json.JsonSerializer.Deserialize<List<object>>(existingCart)!;
+        var cartList = string.IsNullOrEmpty(existingCart)
+            ? new List<CartItemDto>()
+            : System.Text.Json.JsonSerializer.Deserialize<List<CartItemDto>>(existingCart);
 
-        cartItems.Add(cartItem);
+        var existingItem = cartList.FirstOrDefault(i => i.Id == product.Id);
+        if (existingItem != null)
+        {
+            existingItem.Quantity += qty;
+        }
+        else
+        {
+            cartList.Add(new CartItemDto
+                {
+                    Id = product.Id,
+                    Name = product.Name,
+                    Price = product.Price,
+                    Quantity = qty
+                });
+        }
 
-        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "cart",
-            System.Text.Json.JsonSerializer.Serialize(cartItems));
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "cart", System.Text.Json.JsonSerializer.Serialize(cartList));
 
-        await JSRuntime.InvokeVoidAsync("alert", $"{product.Name} added to cart ({qty})!");
+        message = $"{product.Name} added to cart ({qty})!";
+        cartQuantities[product.Id] = 0;
+
+        product.Stock -= qty;
+        if (product.Stock < 0) product.Stock = 0;
+
+        StateHasChanged();
     }
 }
