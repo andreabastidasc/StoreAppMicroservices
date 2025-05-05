@@ -1,0 +1,169 @@
+﻿@page "/cart"
+@inject IJSRuntime JSRuntime
+@inject IHttpClientFactory HttpClientFactory
+@inject NavigationManager Navigation
+@using WebClient.Dtos
+@rendermode InteractiveServer
+
+<h3 class="text-center">Your Cart</h3>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+        @message
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close" @onclick="() => message = null"></button>
+    </div>
+}
+
+@if (cartItems == null || cartItems.Count == 0)
+{
+    <p>Your cart is empty.</p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Product</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in cartItems)
+            {
+                <tr>
+                    <td>@item.Name</td>
+                    <td>@item.Price</td>
+                    <td>
+                        <div class="input-group" style="max-width: 120px;">
+                            <button class="btn btn-secondary" @onclick="() => ChangeQuantity(item.Id, -1)">-</button>
+                            <input class="form-control text-center" readonly value="@item.Quantity" />
+                            <button class="btn btn-secondary" @onclick="() => ChangeQuantity(item.Id, +1)">+</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" @onclick="() => RemoveItem(item.Id)">Remove</button>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <div class="d-flex justify-content-between">
+        <button class="btn btn-danger" @onclick="ClearCart">Clear Cart</button>
+        <button class="btn btn-success" @onclick="FinalizeOrder">Finalize Order</button>
+    </div>
+}
+
+@code {
+    private List<CartItemDto> cartItems = new();
+    private string message = "";
+    private bool loaded = false;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            var json = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "cart");
+            if (!string.IsNullOrEmpty(json))
+            {
+                cartItems = System.Text.Json.JsonSerializer.Deserialize<List<CartItemDto>>(json);
+            }
+            loaded = true;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SaveCart()
+    {
+        await JSRuntime.InvokeVoidAsync("localStorage.setItem", "cart", System.Text.Json.JsonSerializer.Serialize(cartItems));
+        StateHasChanged();
+    }
+
+    private async Task ChangeQuantity(Guid productId, int delta)
+    {
+        var item = cartItems.FirstOrDefault(i => i.Id == productId);
+        if (item != null)
+        {
+            item.Quantity += delta;
+            if (item.Quantity < 1)
+                item.Quantity = 1;
+
+            await SaveCart();
+        }
+    }
+
+    private async Task RemoveItem(Guid productId)
+    {
+        cartItems.RemoveAll(i => i.Id == productId);
+        await SaveCart();
+    }
+
+    private async Task ClearCart()
+    {
+        cartItems.Clear();
+        await JSRuntime.InvokeVoidAsync("localStorage.removeItem", "cart");
+        StateHasChanged();
+    }
+
+    private async Task FinalizeOrder()
+    {
+        if (cartItems.Count == 0)
+        {
+            message = "Your cart is empty.";
+            return;
+        }
+
+        var userJson = await JSRuntime.InvokeAsync<string>("localStorage.getItem", "user");
+        if (string.IsNullOrEmpty(userJson))
+        {
+            message = "You must be logged in.";
+            return;
+        }
+
+        var user = System.Text.Json.JsonSerializer.Deserialize<LoggedUserDto>(userJson, new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true });
+
+        var orderDto = new NewOrderDto
+            {
+                CustomerId = user.CustomerId,
+                CustomerName = user.Name,
+                Items = cartItems.Select(i => new NewOrderItemDto
+                {
+                    ProductId = i.Id.ToString(),
+                    ProductName = i.Name,
+                    UnitPrice = i.Price,
+                    Quantity = i.Quantity,
+                }).ToList(),
+            };
+
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://localhost:7224");
+
+            var response = await client.PostAsJsonAsync("api/orders", orderDto);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var content = await response.Content.ReadAsStringAsync();
+                var createdOrder = System.Text.Json.JsonSerializer.Deserialize<OrderDto>(
+                    content,
+                    new System.Text.Json.JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+
+                await ClearCart();
+                message = $"Order placed! Order ID: {createdOrder?.Id}";
+            }
+            else
+            {
+                message = $"Failed to place order: {response.StatusCode}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"Error: {ex.Message}";
+        }
+    }
+}

@@ -60,7 +60,7 @@ namespace Order.Application.Services
             };
         }
 
-        public async Task CreateAsync(OrderDto dto)
+        public async Task<OrderDto> CreateAsync(OrderDto dto)
         {
             decimal total = 0;
 
@@ -68,10 +68,10 @@ namespace Order.Application.Services
             {
                 var product = await _productClient.GetProductByIdAsync(item.ProductId);
                 if (product == null)
-                    throw new Exception($"Producto con ID {item.ProductId} no encontrado.");
+                    throw new Exception($"Product with id: {item.ProductId} not found.");
 
                 if (item.Quantity > product.Stock)
-                    throw new Exception($"Stock insuficiente para {product.Name}. Disponible: {product.Stock}");
+                    throw new Exception($"Not enough stock {product.Name}.Available: {product.Stock}");
 
                 item.ProductName = product.Name;
                 item.UnitPrice = product.Price;
@@ -79,17 +79,15 @@ namespace Order.Application.Services
 
                 total += item.Subtotal;
 
-                // Actualizar stock
                 int newStock = product.Stock - item.Quantity;
                 var updated = await _productClient.UpdateProductStockAsync(product.Id, newStock);
                 if (!updated)
-                    throw new Exception($"Error actualizando stock para producto {product.Name}");
+                    throw new Exception($"Error updating stock {product.Name}");
             }
 
             dto.TotalAmount = total;
             dto.OrderDate = DateTime.UtcNow;
 
-            // crear entidad
             var order = new OrderEntity
             {
                 Id = Guid.NewGuid(),
@@ -108,6 +106,23 @@ namespace Order.Application.Services
             };
 
             await _repository.AddAsync(order);
+
+            return new OrderDto
+            {
+                Id = order.Id,
+                CustomerId = order.CustomerId,
+                CustomerName = order.CustomerName,
+                OrderDate = order.OrderDate,
+                TotalAmount = order.TotalAmount,
+                Items = order.Items.Select(i => new OrderItemDto
+                {
+                    ProductId = i.ProductId,
+                    ProductName = i.ProductName,
+                    UnitPrice = i.UnitPrice,
+                    Quantity = i.Quantity,
+                    Subtotal = i.UnitPrice * i.Quantity
+                }).ToList()
+            };
         }
 
         public async Task UpdateAsync(OrderDto dto)
@@ -115,25 +130,23 @@ namespace Order.Application.Services
             var order = await _repository.GetByIdAsync(dto.Id);
             if (order == null) throw new Exception("Order not found");
 
-            // get original stock
             var originalItems = order.Items.ToDictionary(i => i.ProductId, i => i.Quantity);
 
             foreach (var newItem in dto.Items)
             {
                 var product = await _productClient.GetProductByIdAsync(newItem.ProductId);
-                if (product == null) throw new Exception($"Producto {newItem.ProductId} no encontrado");
+                if (product == null) throw new Exception($"Product with id: {newItem.ProductId} not found");
 
                 var originalQty = originalItems.ContainsKey(newItem.ProductId) ? originalItems[newItem.ProductId] : 0;
                 var qtyDifference = newItem.Quantity - originalQty;
 
                 var newStock = product.Stock - qtyDifference;
-                if (newStock < 0) throw new Exception($"Stock insuficiente para producto {product.Name}");
+                if (newStock < 0) throw new Exception($"Not enough stock for product {product.Name}");
 
                 var updated = await _productClient.UpdateProductStockAsync(product.Id, newStock);
-                if (!updated) throw new Exception($"Error actualizando stock para producto {product.Name}");
+                if (!updated) throw new Exception($"Error updating stock for {product.Name}");
             }
 
-            // update order
             order.CustomerId = dto.CustomerId;
             order.CustomerName = dto.CustomerName;
             order.OrderDate = dto.OrderDate;
@@ -164,7 +177,7 @@ namespace Order.Application.Services
                 {
                     var newStock = product.Stock + item.Quantity;
                     var updated = await _productClient.UpdateProductStockAsync(product.Id, newStock);
-                    if (!updated) throw new Exception($"Error actualizando stock para producto {product.Name}");
+                    if (!updated) throw new Exception($"Error updating stock of product {product.Name}");
                 }
             }
 

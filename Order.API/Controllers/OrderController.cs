@@ -30,10 +30,10 @@ namespace Order.API.Controllers
         }
 
         [HttpPost]
-        public async Task<IActionResult> Create(OrderDto dto)
+        public async Task<ActionResult<OrderDto>> Create(OrderDto dto)
         {
-            await _orderService.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+            var createdOrder = await _orderService.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = createdOrder.Id }, createdOrder);
         }
 
         [HttpPut("{id}")]
