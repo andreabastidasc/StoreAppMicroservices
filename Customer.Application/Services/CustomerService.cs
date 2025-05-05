@@ -44,20 +44,30 @@ namespace Customer.Application.Services
             };
         }
 
-        public async Task CreateAsync(CustomerDto dto)
+        public async Task<CustomerDto> CreateAsync(CustomerDto dto)
         {
             var entity = new CustomerEntity
             {
                 Id = Guid.NewGuid(),
                 Name = dto.Name,
                 Email = dto.Email,
-                Phone = dto.Phone,
                 Address = dto.Address,
+                Phone = dto.Phone,
                 RegistrationDate = DateTime.UtcNow
             };
 
             await _repository.AddAsync(entity);
+
+            return new CustomerDto
+            {
+                Id = entity.Id,
+                Name = entity.Name,
+                Email = entity.Email,
+                Address = entity.Address,
+                Phone = entity.Phone
+            };
         }
+
 
         public async Task UpdateAsync(CustomerDto dto)
         {

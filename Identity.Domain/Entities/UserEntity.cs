@@ -12,6 +12,6 @@ namespace Identity.Domain.Entities
         public string Email { get; set; } = null!;
         public string PasswordHash { get; set; } = null!;
         public string Name { get; set; } = null!;
-        public Guid CustomerId { get; set; }  // Relación al Customer
+        public Guid CustomerId { get; set; }
     }
 }

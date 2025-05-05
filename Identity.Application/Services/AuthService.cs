@@ -1,4 +1,5 @@
-﻿using Identity.Application.DTOs;
+﻿using Identity.Application.Clients;
+using Identity.Application.DTOs;
 using Identity.Domain.Entities;
 using Identity.Domain.Interfaces;
 using BCrypt.Net;
@@ -8,10 +9,14 @@ namespace Identity.Application.Services
     public class AuthService
     {
         private readonly IUserRepository _userRepository;
+        private readonly CustomerClient _customerClient;
 
-        public AuthService(IUserRepository userRepository)
+        public AuthService(IUserRepository userRepository, CustomerClient customerClient)
         {
+            Console.WriteLine("AuthService constructor called");
+
             _userRepository = userRepository;
+            _customerClient = customerClient;
         }
 
         public async Task<bool> RegisterAsync(UserDto dto)
@@ -22,19 +27,32 @@ namespace Identity.Application.Services
 
             var hashedPassword = BCrypt.Net.BCrypt.HashPassword(dto.Password);
 
+            var createdCustomer = await _customerClient.CreateCustomerAsync(new CustomerDto
+            {
+                Name = dto.Name,
+                Email = dto.Email,
+                Address = "Default Address",
+                Phone = "Default Phone"
+            });
+
+            if (createdCustomer == null)
+                throw new Exception("Error creating customer.");
+
             var user = new UserEntity
             {
                 Id = Guid.NewGuid(),
                 Email = dto.Email,
                 PasswordHash = hashedPassword,
-                Name = dto.Name
+                Name = dto.Name,
+                CustomerId = createdCustomer.Id
             };
 
             await _userRepository.AddAsync(user);
+
             return true;
         }
 
-        public async Task<bool> LoginAsync(UserDto dto)
+        public async Task<bool> LoginAsync(LoginDto dto)
         {
             return await _userRepository.ValidateUserAsync(dto.Email, dto.Password);
         }

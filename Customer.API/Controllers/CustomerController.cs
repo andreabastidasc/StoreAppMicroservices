@@ -31,10 +31,10 @@ namespace Customer.API.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Create(CustomerDto dto)
+        public async Task<ActionResult<CustomerDto>> Create(CustomerDto dto)
         {
-            await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = dto.Id }, dto);
+            var customer = await _service.CreateAsync(dto);
+            return CreatedAtAction(nameof(GetById), new { id = customer.Id }, customer);
         }
 
         [HttpPut("{id}")]
