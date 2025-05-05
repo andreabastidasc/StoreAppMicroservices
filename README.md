@@ -85,6 +85,25 @@ We have created the following microservices:
 - Order API: `https://localhost:7013/swagger`
 - Identity API: `https://localhost:7053/swagger`
 
+## Web Client 
+
+Para iniciar el Cliente se debe agregar como startup project junto a cada microservicio.
+
+Add the client as a startup project in multiple startup projects.
+
+- Tiene un Login y un Register
+- Guarda el usuario y el carrito en el localstorage
+- Debes registrarte e iniciar sesión para ver la lista de productos
+- Puedes ver los productos que agregaste al carrito en la página de Cart (/cart)
+- El backend actualiza el stock y al agregarse al carrito tambien es modificado en el cliente
+- En la página de carrito se puede editar la orden o tambien finalizarla, al finalizar muestra el id de la orden creada
+
+- It has a Register and Login working
+- It saves the user in localstorage
+- You have to register and login to see the product list
+- You can add products to your cart and see what you added on the Cart page
+- In the cart page you can edit your cart and finish the order which gives you and id for your order
+
 ## Notas / Notes
 
 - Cada API usa su propia base de datos (ProductsDB, CustomersDB, OrdersDB, IdentityDB).
