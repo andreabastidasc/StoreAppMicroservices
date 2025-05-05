@@ -56,12 +56,24 @@ We have created the following microservices:
 ✅ Se actualiza el stock al crear órdenes
 ✅ CRUD completo en Products, Customers, Orders
 
-## Cómo correr los microservicios / How to run the microservices
+## Current status
+✅ Product API working
+✅ Customer API working
+✅ Order API working
+✅ Identity API working
+✅ Customers are created automatically when registering a new user
+✅ Multiple start up projects
+✅ Stocks are updated when a order is created, updated o deleted
+✅ CRUD for every API
+
+## Cómo correr los microservicios
 
 1. Abrir solución en Visual Studio
 2. Establecer todos los proyectos API como **Startup Projects** (Multiple startup projects)
 3. Ejecutar la solución (F5)
 4. Acceder a cada API en Swagger:
+
+## How to run the microservices
 
 1. Open solution with Visual Studio
 2. Set all projects as **Startup Projects** (Multiple startup projects)
