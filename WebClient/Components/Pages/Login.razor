@@ -1,0 +1,76 @@
+﻿@page "/login"
+@using WebApp.Dtos
+@rendermode InteractiveServer
+
+<h3 class="text-center">Login</h3>
+
+<EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="LoginForm" RenderMode="InteractiveServer" class="card p-4 shadow-sm" style="max-width: 400px; margin: auto;">
+    <DataAnnotationsValidator />
+    <ValidationSummary class="alert alert-danger" />
+
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText @bind-Value="loginModel.Email" class="form-control" />
+        <ValidationMessage For="@(() => loginModel.Email)" class="text-danger" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Password</label>
+        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
+        <ValidationMessage For="@(() => loginModel.Password)" class="text-danger" />
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Login</button>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(message))
+{
+    <div class="alert alert-info mt-3">@message</div>
+}
+
+@code {
+    private LoginDto loginModel = new LoginDto();
+    private string message;
+
+    [Inject]
+    private IHttpClientFactory HttpClientFactory { get; set; }
+
+    [Inject]
+    private NavigationManager NavigationManager { get; set; }
+
+    [Inject]
+    private IJSRuntime JSRuntime { get; set; }  // para guardar en localStorage
+
+    private async Task HandleLogin()
+    {
+        try
+        {
+            var client = HttpClientFactory.CreateClient();
+            client.BaseAddress = new Uri("https://localhost:7053");
+
+            var response = await client.PostAsJsonAsync("api/auth/login", loginModel);
+
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+
+                // Guarda en localStorage (simulando almacenamiento de token/usuario)
+                await JSRuntime.InvokeVoidAsync("localStorage.setItem", "user", json);
+
+                message = "Login successful! Redirecting...";
+
+                // Redirigir a página principal o dashboard
+                NavigationManager.NavigateTo("/");
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                message = $"Login failed: {response.StatusCode} - {error}";
+            }
+        }
+        catch (Exception ex)
+        {
+            message = $"An error occurred: {ex.Message}";
+        }
+    }
+}
