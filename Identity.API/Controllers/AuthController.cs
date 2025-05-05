@@ -26,9 +26,19 @@ namespace Identity.API.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto dto)
         {
-            var success = await _authService.LoginAsync(dto);
-            if (!success) return Unauthorized();
-            return Ok("Login successful.");
+            var user = await _authService.LoginAsync(dto);
+            if (user == null) return Unauthorized();
+
+            var userDto = new
+            {
+                Id = user.Id,
+                Name = user.Name,
+                Email = user.Email,
+                CustomerId = user.CustomerId
+            };
+
+            return Ok(userDto);
         }
+
     }
 }

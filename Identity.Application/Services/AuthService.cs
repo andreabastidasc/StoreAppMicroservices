@@ -52,9 +52,13 @@ namespace Identity.Application.Services
             return true;
         }
 
-        public async Task<bool> LoginAsync(LoginDto dto)
+        public async Task<UserEntity?> LoginAsync(LoginDto dto)
         {
-            return await _userRepository.ValidateUserAsync(dto.Email, dto.Password);
+            var user = await _userRepository.GetByEmailAsync(dto.Email);
+            if (user == null) return null;
+
+            var isValid = BCrypt.Net.BCrypt.Verify(dto.Password, user.PasswordHash);
+            return isValid ? user : null;
         }
     }
 }
