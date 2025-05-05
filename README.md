@@ -1,70 +1,84 @@
-﻿
-# StoreAppMicroservices
+﻿# StoreApp Microservices
 
-Este proyecto implementa una arquitectura de microservicios utilizando **ASP.NET Core 8**, siguiendo buenas prácticas como **DDD (Domain-Driven Design)** y **Clean Architecture**.
+## Microservicios
 
-## 📦 Microservicios implementados
+Hemos creado los siguientes microservicios:
+We have created the following microservices:
 
-✅ **Product Microservice** (completo):
+### 1. Product Microservice
+- CRUD básico para productos.
+- Cada producto incluye: nombre, descripción, precio y cantidad en stock.
 
-- CRUD de productos con los campos:
-  - `Id` (Guid)
-  - `Name` (string)
-  - `Description` (string)
-  - `Price` (decimal)
-  - `Stock` (int)
-- Comunicación con base de datos SQL Server usando **Entity Framework Core (Code First)**.
-- Exposición de API REST mediante **ASP.NET Core Web API**.
-- Validaciones con **FluentValidation**.
-- Mapeo de modelos con **AutoMapper**.
-- Documentación con **Swagger UI**.
+- Basic CRUD for products.
+- Each product includes: name, description, price, and stock quantity.
 
----
+### 2. Customer Microservice
+- CRUD para clientes.
+- Campos: nombre, email, dirección, fecha de registro.
 
-## 🗄️ Base de datos
+- CRUD for customers.
+- Fields: name, email, address, registration date.
 
-La base de datos **`ProductDb`** se crea automáticamente mediante **EF Core Migrations**.
+### 3. Order Microservice
+- Permite crear órdenes a partir de un Customer y Productos seleccionados.
+- Calcula el total de la compra y actualiza el stock de los productos.
+- Permite listar órdenes históricas.
+- Si no hay stock suficiente, limita la compra a la cantidad disponible.
 
-✔️ Para aplicar la migración inicial, ya fue ejecutado:
+- Allows creating orders from a Customer and selected Products.
+- Calculates the total purchase amount and updates product stock.
+- Allows listing historical orders.
+- If there’s not enough stock, limits the purchase to available quantity.
 
-```bash
-Add-Migration InitialCreate -StartupProject Product.API -Project Product.Infrastructure
-Update-Database -StartupProject Product.API -Project Product.Infrastructure
-```
+### 4. Identity Microservice (opcional)
+- Permite registrar y loguear usuarios.
+- Al registrar un usuario, se crea automáticamente un customer asociado.
 
----
+- Allows registering and logging in users.
+- When registering a user, a linked customer is automatically created.
 
-## 🖥️ Ejecutar el microservicio
+## Tecnologías utilizadas / Technologies used
 
-1. Abrir la solución `StoreAppMicroservices.sln` en **Visual Studio 2022**.
-2. Seleccionar **Product.API** como proyecto de inicio.
-3. Ejecutar con **F5** (Debug).
-4. Acceder a **Swagger UI** en:
-
-```
-https://localhost:7154/swagger/index.html
-```
-
----
-
-## 📚 Endpoints disponibles
-
-| Método  | Ruta               | Descripción              |
-|---------|--------------------|------------------------|
-| GET     | /api/products       | Obtener todos los productos |
-| GET     | /api/products/{id}  | Obtener producto por Id |
-| POST    | /api/products       | Crear un nuevo producto |
-| PUT     | /api/products/{id}  | Actualizar producto     |
-| DELETE  | /api/products/{id}  | Eliminar producto       |
-
-
----
-
-## ⚙️ Tecnologías utilizadas
-
-- ASP.NET Core 8
+- .NET 8
 - Entity Framework Core
-- SQL Server LocalDB
-- AutoMapper
-- FluentValidation
-- Swagger / OpenAPI
+- SQL Server
+- Visual Studio 2022
+- Swagger
+
+## Estado actual / Current status
+
+✅ Product API funcionando
+✅ Customer API funcionando
+✅ Order API funcionando
+✅ Identity API funcionando
+✅ Se crean Customers automáticamente al registrar usuarios
+✅ Microservicios corriendo simultáneamente
+✅ Se actualiza el stock al crear órdenes
+✅ CRUD completo en Products, Customers, Orders
+
+## Cómo correr los microservicios / How to run the microservices
+
+1. Abrir solución en Visual Studio
+2. Establecer todos los proyectos API como **Startup Projects** (Multiple startup projects)
+3. Ejecutar la solución (F5)
+4. Acceder a cada API en Swagger:
+
+1. Open solution with Visual Studio
+2. Set all projects as **Startup Projects** (Multiple startup projects)
+3. Build the solution by pressing (F5)
+4. Access the API using the Swagger interface:
+
+- Product API: `https://localhost:7154/swagger`
+- Customer API: `https://localhost:7022/swagger`
+- Order API: `https://localhost:7013/swagger`
+- Identity API: `https://localhost:7053/swagger`
+
+## Notas / Notes
+
+- Cada API usa su propia base de datos (ProductsDB, CustomersDB, OrdersDB, IdentityDB).
+- Al eliminar registros desde SQL Server, se recomienda limpiar ambas tablas (ej: Customers + Users).
+- Se utilizó HttpClient para comunicación entre microservicios (ProductClient, CustomerClient).
+
+- Each API has its own DB (ProductsDB, CustomersDB, OrdersDB, IdentityDB).
+- When deleting items using SQL server its recommended to clean the other tables aswell (ej: Customers + Users).
+- Http was used to communicate the different services (ProductClient, CustomerClient).
